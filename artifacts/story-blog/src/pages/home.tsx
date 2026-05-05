@@ -1,8 +1,6 @@
-import { useEffect, useRef } from "react";
-import { Link } from "wouter";
-import { gsap } from "gsap";
+import { Link, useSearch } from "wouter";
 import { useLangStore } from "@/lib/store";
-import { useListStories, useGetFeaturedStories, useListCollections, useGetAuthor } from "@workspace/api-client-react";
+import { useListStories, useListCollections, useGetAuthor } from "@workspace/api-client-react";
 import { ShaderBackground } from "@/components/shader-background";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -15,31 +13,36 @@ const CATEGORY_LABELS: Record<string, { ru: string; en: string }> = {
   journeys: { ru: "Путешествия", en: "Journeys" },
 };
 
+function formatDate(dateStr: string, lang: "ru" | "en") {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", {
+    year: "numeric",
+    month: "long",
+  });
+}
+
 export default function Home() {
   const { lang } = useLangStore();
-  const cardsRef = useRef<HTMLDivElement>(null);
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const activeSlug = params.get("collection");
 
   const { data: stories, isLoading: storiesLoading } = useListStories();
-  const { data: featured } = useGetFeaturedStories();
   const { data: collections } = useListCollections();
   const { data: author } = useGetAuthor();
 
-  useEffect(() => {
-    if (!stories || !cardsRef.current) return;
-    const cards = cardsRef.current.querySelectorAll(".story-card");
-    gsap.fromTo(
-      cards,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, stagger: 0.08, duration: 0.6, ease: "power2.out" }
-    );
-  }, [stories]);
+  const activeCollection = collections?.find((c) => c.slug === activeSlug) ?? null;
+
+  const filtered = activeCollection
+    ? (stories ?? []).filter((s) => s.collectionId === activeCollection.id)
+    : (stories ?? []);
 
   return (
     <div className="flex-1 container mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-[240px_1fr_220px] gap-8 max-w-6xl">
-      {/* LEFT COLUMN — Author + Shader */}
-      <aside className="lg:block">
+
+      {/* LEFT — Author */}
+      <aside>
         <div className="sticky top-24 space-y-6">
-          {/* Shader panel */}
           <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden border border-border shadow-sm">
             <ShaderBackground />
             {author && (
@@ -51,7 +54,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Author bio */}
           {author ? (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground font-serif leading-relaxed">
@@ -82,85 +84,71 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* CENTER COLUMN — Story Feed */}
+      {/* CENTER — Stories */}
       <main className="min-w-0">
-        {/* Featured banner */}
-        {featured && featured.length > 0 && (
-          <div className="mb-10">
-            <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">
-              {lang === "ru" ? "Избранное" : "Featured"}
-            </p>
-            <Link href={`/stories/${featured[0].id}`}
-              className="group block border border-border rounded-sm p-6 hover:bg-accent/40 transition-colors cursor-pointer">
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
-                {CATEGORY_LABELS[featured[0].category]?.[lang] ?? featured[0].category}
-              </p>
-              <h2 className="text-2xl font-serif font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mb-3">
-                {lang === "ru" ? featured[0].titleRu : featured[0].titleEn}
-              </h2>
-              <p className="text-muted-foreground font-serif text-base leading-relaxed mb-4 line-clamp-3">
-                {lang === "ru" ? featured[0].excerptRu : featured[0].excerptEn}
-              </p>
-              <span className="text-xs font-mono text-muted-foreground">
-                {featured[0].readingTimeMinutes} {lang === "ru" ? "мин. чтения" : "min read"}
-              </span>
-            </Link>
-          </div>
-        )}
-
-        {/* Story feed */}
-        <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-6">
-            {lang === "ru" ? "Все истории" : "All Stories"}
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            {activeCollection
+              ? (lang === "ru" ? activeCollection.nameRu : activeCollection.nameEn)
+              : (lang === "ru" ? "Все истории" : "All Stories")}
           </p>
-
-          {storiesLoading ? (
-            <div className="space-y-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="border-b border-border pb-6 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div ref={cardsRef} className="space-y-0 divide-y divide-border">
-              {(stories ?? []).map((story) => (
-                <Link key={story.id} href={`/stories/${story.id}`}
-                  className="story-card group flex gap-6 py-6 hover:bg-accent/20 transition-colors cursor-pointer px-2 -mx-2 rounded-sm"
-                  data-testid={`card-story-${story.id}`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">
-                      {CATEGORY_LABELS[story.category]?.[lang] ?? story.category}
-                    </p>
-                    <h3 className="text-xl font-serif font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mb-2">
-                      {lang === "ru" ? story.titleRu : story.titleEn}
-                    </h3>
-                    <p className="text-muted-foreground font-serif text-sm leading-relaxed line-clamp-2">
-                      {lang === "ru" ? story.excerptRu : story.excerptEn}
-                    </p>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end justify-between pt-1">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {story.readingTimeMinutes} {lang === "ru" ? "мин" : "min"}
-                    </span>
-                    {story.isFeatured && (
-                      <span className="text-xs font-mono border border-border px-1.5 py-0.5 rounded-sm text-muted-foreground">
-                        {lang === "ru" ? "Избр." : "Pick"}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+          {activeCollection && (
+            <Link href="/" className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors">
+              {lang === "ru" ? "← Все" : "← All"}
+            </Link>
           )}
         </div>
+
+        {storiesLoading ? (
+          <div className="space-y-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="border-b border-border pb-6 space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map((story) => (
+              <Link
+                key={story.id}
+                href={`/stories/${story.id}`}
+                className="group flex gap-6 py-6 hover:bg-accent/20 transition-colors cursor-pointer px-2 -mx-2 rounded-sm"
+                data-testid={`card-story-${story.id}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1">
+                    {CATEGORY_LABELS[story.category]?.[lang] ?? story.category}
+                  </p>
+                  <h3 className="text-xl font-serif font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mb-2">
+                    {lang === "ru" ? story.titleRu : story.titleEn}
+                  </h3>
+                  <p className="text-muted-foreground font-serif text-sm leading-relaxed line-clamp-2">
+                    {lang === "ru" ? story.excerptRu : story.excerptEn}
+                  </p>
+                </div>
+                <div className="shrink-0 pt-1">
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {formatDate(story.createdAt, lang)}
+                  </span>
+                </div>
+              </Link>
+            ))}
+
+            {filtered.length === 0 && (
+              <p className="py-12 text-center font-serif text-muted-foreground italic">
+                {lang === "ru" ? "Историй пока нет." : "No stories yet."}
+              </p>
+            )}
+          </div>
+        )}
       </main>
 
-      {/* RIGHT COLUMN — Collections */}
-      <aside className="lg:block">
+      {/* RIGHT — Collections */}
+      <aside>
         <div className="sticky top-24 space-y-6">
           <div>
             <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">
@@ -168,18 +156,28 @@ export default function Home() {
             </p>
             {collections ? (
               <nav className="space-y-1">
-                {collections.map((col) => (
-                  <Link key={col.id} href={`/?collection=${col.slug}`}
-                    className="flex items-center justify-between py-2 px-3 rounded-sm hover:bg-accent transition-colors group cursor-pointer"
-                    data-testid={`link-collection-${col.id}`}>
-                    <span className="font-serif text-sm text-foreground group-hover:text-primary transition-colors">
-                      {lang === "ru" ? col.nameRu : col.nameEn}
-                    </span>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {col.storyCount}
-                    </span>
-                  </Link>
-                ))}
+                {collections.map((col) => {
+                  const isActive = activeSlug === col.slug;
+                  return (
+                    <Link
+                      key={col.id}
+                      href={isActive ? "/" : `/?collection=${col.slug}`}
+                      className={`flex items-center justify-between py-2 px-3 rounded-sm transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-accent text-foreground"
+                          : "hover:bg-accent text-foreground"
+                      }`}
+                      data-testid={`link-collection-${col.id}`}
+                    >
+                      <span className="font-serif text-sm">
+                        {lang === "ru" ? col.nameRu : col.nameEn}
+                      </span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {col.storyCount}
+                      </span>
+                    </Link>
+                  );
+                })}
               </nav>
             ) : (
               <div className="space-y-2">
@@ -195,9 +193,11 @@ export default function Home() {
               {lang === "ru" ? "Темы" : "Themes"}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {Object.entries(CATEGORY_LABELS).map(([key, labels]) => (
-                <span key={key}
-                  className="text-xs font-mono border border-border px-2 py-1 rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-default">
+              {Object.entries(CATEGORY_LABELS).map(([, labels]) => (
+                <span
+                  key={labels.en}
+                  className="text-xs font-mono border border-border px-2 py-1 rounded-sm text-muted-foreground"
+                >
                   {labels[lang]}
                 </span>
               ))}
