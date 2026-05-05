@@ -19,6 +19,7 @@ const CATEGORY_LABELS: Record<string, { ru: string; en: string }> = {
   city: { ru: "Город", en: "City Life" },
   childhood: { ru: "Детство", en: "Childhood" },
   journeys: { ru: "Путешествия", en: "Journeys" },
+  reflections: { ru: "Размышления", en: "Reflections" },
 };
 
 export default function StoryDetail() {
