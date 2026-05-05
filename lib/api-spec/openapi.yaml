@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Literary storytelling blog API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: stories
+    description: Story operations
+  - name: guestbook
+    description: Guestbook operations
+  - name: auth
+    description: Authentication
+  - name: author
+    description: Author profile
+  - name: collections
+    description: Story collections
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,297 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stories:
+    get:
+      operationId: listStories
+      tags: [stories]
+      summary: List all stories
+      parameters:
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [ru, en]
+          description: Language preference
+        - in: query
+          name: collection
+          schema:
+            type: string
+          description: Filter by collection slug
+      responses:
+        "200":
+          description: List of stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Story"
+    post:
+      operationId: createStory
+      tags: [stories]
+      summary: Create a new story (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStoryBody"
+      responses:
+        "201":
+          description: Story created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+
+  /stories/featured:
+    get:
+      operationId: getFeaturedStories
+      tags: [stories]
+      summary: Get featured/pinned stories
+      responses:
+        "200":
+          description: Featured stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Story"
+
+  /stories/by-collection:
+    get:
+      operationId: getStoriesByCollection
+      tags: [stories]
+      summary: Get stories grouped by collection
+      responses:
+        "200":
+          description: Stories grouped by collection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CollectionWithStories"
+
+  /stories/{id}:
+    get:
+      operationId: getStory
+      tags: [stories]
+      summary: Get a single story
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Story detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateStory
+      tags: [stories]
+      summary: Update a story (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStoryBody"
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+    delete:
+      operationId: deleteStory
+      tags: [stories]
+      summary: Delete a story (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /author:
+    get:
+      operationId: getAuthor
+      tags: [author]
+      summary: Get author profile
+      responses:
+        "200":
+          description: Author profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Author"
+    put:
+      operationId: updateAuthor
+      tags: [author]
+      summary: Update author profile (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAuthorBody"
+      responses:
+        "200":
+          description: Updated author
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Author"
+
+  /collections:
+    get:
+      operationId: listCollections
+      tags: [collections]
+      summary: List all collections
+      responses:
+        "200":
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Collection"
+    post:
+      operationId: createCollection
+      tags: [collections]
+      summary: Create a collection (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCollectionBody"
+      responses:
+        "201":
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+
+  /guestbook:
+    get:
+      operationId: listGuestbookEntries
+      tags: [guestbook]
+      summary: List guestbook entries
+      responses:
+        "200":
+          description: Guestbook entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuestbookEntry"
+    post:
+      operationId: createGuestbookEntry
+      tags: [guestbook]
+      summary: Leave a guestbook message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuestbookEntryBody"
+      responses:
+        "201":
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestbookEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +335,314 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    AuthResult:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/AuthUser"
+      required:
+        - token
+        - user
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        isAdmin:
+          type: boolean
+      required:
+        - id
+        - username
+        - isAdmin
+
+    Story:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        titleRu:
+          type: string
+        titleEn:
+          type: string
+        excerptRu:
+          type: string
+        excerptEn:
+          type: string
+        contentRu:
+          type: string
+        contentEn:
+          type: string
+        category:
+          type: string
+        collectionId:
+          type: integer
+          nullable: true
+        collectionName:
+          type: string
+          nullable: true
+        isFeatured:
+          type: boolean
+        coverImageUrl:
+          type: string
+          nullable: true
+        readingTimeMinutes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - slug
+        - titleRu
+        - titleEn
+        - excerptRu
+        - excerptEn
+        - contentRu
+        - contentEn
+        - category
+        - isFeatured
+        - readingTimeMinutes
+        - createdAt
+        - updatedAt
+
+    CreateStoryBody:
+      type: object
+      properties:
+        slug:
+          type: string
+        titleRu:
+          type: string
+        titleEn:
+          type: string
+        excerptRu:
+          type: string
+        excerptEn:
+          type: string
+        contentRu:
+          type: string
+        contentEn:
+          type: string
+        category:
+          type: string
+        collectionId:
+          type: integer
+          nullable: true
+        isFeatured:
+          type: boolean
+        coverImageUrl:
+          type: string
+          nullable: true
+        readingTimeMinutes:
+          type: integer
+      required:
+        - slug
+        - titleRu
+        - titleEn
+        - excerptRu
+        - excerptEn
+        - contentRu
+        - contentEn
+        - category
+        - readingTimeMinutes
+
+    UpdateStoryBody:
+      type: object
+      properties:
+        slug:
+          type: string
+        titleRu:
+          type: string
+        titleEn:
+          type: string
+        excerptRu:
+          type: string
+        excerptEn:
+          type: string
+        contentRu:
+          type: string
+        contentEn:
+          type: string
+        category:
+          type: string
+        collectionId:
+          type: integer
+          nullable: true
+        isFeatured:
+          type: boolean
+        coverImageUrl:
+          type: string
+          nullable: true
+        readingTimeMinutes:
+          type: integer
+
+    CollectionWithStories:
+      type: object
+      properties:
+        id:
+          type: integer
+        nameRu:
+          type: string
+        nameEn:
+          type: string
+        slug:
+          type: string
+        stories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Story"
+      required:
+        - id
+        - nameRu
+        - nameEn
+        - slug
+        - stories
+
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+        nameRu:
+          type: string
+        nameEn:
+          type: string
+        bioRu:
+          type: string
+        bioEn:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        instagramUrl:
+          type: string
+          nullable: true
+        telegramUrl:
+          type: string
+          nullable: true
+      required:
+        - id
+        - nameRu
+        - nameEn
+        - bioRu
+        - bioEn
+
+    UpdateAuthorBody:
+      type: object
+      properties:
+        nameRu:
+          type: string
+        nameEn:
+          type: string
+        bioRu:
+          type: string
+        bioEn:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        instagramUrl:
+          type: string
+          nullable: true
+        telegramUrl:
+          type: string
+          nullable: true
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: integer
+        nameRu:
+          type: string
+        nameEn:
+          type: string
+        slug:
+          type: string
+        storyCount:
+          type: integer
+      required:
+        - id
+        - nameRu
+        - nameEn
+        - slug
+        - storyCount
+
+    CreateCollectionBody:
+      type: object
+      properties:
+        nameRu:
+          type: string
+        nameEn:
+          type: string
+        slug:
+          type: string
+      required:
+        - nameRu
+        - nameEn
+        - slug
+
+    GuestbookEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - message
+        - createdAt
+
+    CreateGuestbookEntryBody:
+      type: object
+      properties:
+        name:
+          type: string
+        message:
+          type: string
+      required:
+        - name
+        - message
