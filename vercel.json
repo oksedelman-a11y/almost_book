@@ -1,17 +1,7 @@
 {
   "version": 2,
   "installCommand": "pnpm install",
-  "buildCommand": "cd artifacts/api-server && node ./build.mjs && cd ../story-blog && npx vite build --config vite.config.ts",
+  "buildCommand": "cd artifacts/story-blog && npx vite build --config vite.config.ts",
   "outputDirectory": "artifacts/story-blog/dist/public",
-  "framework": null,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/api-server.js"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "framework": null
 }
