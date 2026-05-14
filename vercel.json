@@ -1,21 +1,8 @@
 {
-  "version": 2,
   "buildCommand": "node ./build.mjs",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api" }
-  ],
-  "functions": {
-    "vercel-entry.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/vercel-entry.js"
-    }
   ]
 }
