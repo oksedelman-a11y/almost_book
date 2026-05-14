@@ -1,16 +1,17 @@
 {
   "version": 2,
-  "buildCommand": "cd artifacts/story-blog && npx vite build --config vite.config.ts",
+  "installCommand": "pnpm install",
+  "buildCommand": "cd artifacts/story-blog && npx vite build",
   "outputDirectory": "artifacts/story-blog/dist/public",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
+  "framework": null,
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/api-server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
