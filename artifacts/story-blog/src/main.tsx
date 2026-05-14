@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 
 // Указываем, где находится наш API-сервер
-setBaseUrl("https://almost-book-api-server.vercel.app");
+setBaseUrl("https://almost-book-story-blog.vercel.app");
 
 setAuthTokenGetter(() => {
   try {
