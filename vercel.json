@@ -4,11 +4,6 @@
   "buildCommand": "cd artifacts/api-server && node ./build.mjs && cd ../story-blog && npx vite build --config vite.config.ts",
   "outputDirectory": "artifacts/story-blog/dist/public",
   "framework": null,
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
