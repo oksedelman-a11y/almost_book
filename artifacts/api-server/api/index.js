@@ -1,14 +1,17 @@
-// Этот файл Vercel точно распознает как бессерверную функцию Node.js
-// и выполнит его, а не отдаст как текст.
-export default async function handler(req, res) {
-  // Если сервер еще не запущен, импортируем и запускаем его.
-  // Vercel сам передаст ему управление входящим запросом.
+// Загружаем и запускаем сервер
+const run = async () => {
   if (!global.__app) {
-    const appModule = await import('../dist/index.mjs');
-    global.__app = appModule.default || appModule;
+    const app = (await import('../dist/index.mjs')).default;
+    global.__app = app;
+    // Запускаем прослушивание порта (Vercel сам предоставит порт)
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => console.log(`Server running on port ${port}`));
   }
+};
+run();
 
-  // Передаем запрос в Express-приложение.
-  // Это заставит Vercel обрабатывать запрос через наш сервер.
+// Экспортируем функцию-обработчик, которую Vercel будет вызывать при каждом запросе
+export default async function handler(req, res) {
+  await run();
   return global.__app(req, res);
 }
