@@ -1,18 +1,8 @@
 {
-  "version": 2,
   "buildCommand": "node ./build.mjs",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
-  "builds": [
-    {
-      "src": "vercel-server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "vercel-server.js"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }
