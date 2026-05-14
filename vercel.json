@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd artifacts/story-blog && PORT=3000 BASE_PATH=/ npx vite build --config vite.config.ts",
-  "outputDirectory": "artifacts/story-blog/dist",
+  "outputDirectory": "artifacts/story-blog/dist/public",
   "installCommand": "pnpm install",
   "framework": null
 }
