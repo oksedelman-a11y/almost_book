@@ -6,16 +6,8 @@ export default defineConfig({
 
   base: "/",
 
-  resolve: {
-    alias: {
-      "@": "/src"
-    }
-  },
-
   build: {
     outDir: "dist/public",
     emptyOutDir: true,
-    assetsDir: "assets",
-    sourcemap: false
-  }
+  },
 });
