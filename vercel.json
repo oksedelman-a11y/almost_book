@@ -3,13 +3,16 @@
   "buildCommand": "node ./build.mjs",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "vercel-server.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
-    { "src": "/(.*)", "dest": "/api/index.js" }
+    {
+      "src": "/(.*)",
+      "dest": "vercel-server.js"
+    }
   ]
 }
