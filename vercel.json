@@ -3,16 +3,7 @@
   "buildCommand": "node ./build.mjs",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/index.js"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }
