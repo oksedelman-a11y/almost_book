@@ -1,20 +1,6 @@
 {
   "version": 2,
-
-  "installCommand": "pnpm install",
-
-  "buildCommand": "cd artifacts/api-server && node build.mjs && cd ../story-blog && pnpm run build",
-
+  "buildCommand": "pnpm run build",
   "outputDirectory": "artifacts/story-blog/dist/public",
-
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
-  ]
+  "installCommand": "pnpm install"
 }

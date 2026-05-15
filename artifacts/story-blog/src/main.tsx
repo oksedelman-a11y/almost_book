@@ -3,7 +3,7 @@ import { setAuthTokenGetter, setBaseUrl } from "@workspace/api-client-react";
 import App from "./App";
 import "./index.css";
 
-setBaseUrl("/api");
+setBaseUrl("https://almost-book-api-server.vercel.app");
 
 setAuthTokenGetter(() => {
   try {
