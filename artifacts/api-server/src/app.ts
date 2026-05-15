@@ -44,7 +44,7 @@ app.use(
 );
 
 // 🔥 ВАЖНО: явная обработка preflight
-app.options("*", cors());
+app.options("/{*path}", cors());
 
 // --------------------
 // BODY PARSERS

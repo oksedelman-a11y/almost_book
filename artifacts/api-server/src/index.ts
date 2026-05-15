@@ -1,3 +1,8 @@
 import app from "./app";
+import { logger } from "./lib/logger";
 
-export default app;
+const PORT = Number(process.env.PORT) || 3001;
+
+app.listen(PORT, () => {
+  logger.info({ port: PORT }, "API server listening");
+});
