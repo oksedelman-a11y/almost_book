@@ -1,6 +1,5 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
-import { Request, Response } from "express";
 // @ts-ignore
 const pinoHttp = require("pino-http");
 
@@ -9,14 +8,11 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
-// --------------------
-// LOGGING
-// --------------------
 app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req: Request) {
+      req(req: Request & { id?: unknown }) {
         return {
           id: req.id,
           method: req.method,
@@ -24,17 +20,12 @@ app.use(
         };
       },
       res(res: Response) {
-        return {
-          statusCode: res.statusCode,
-        };
+        return { statusCode: res.statusCode };
       },
     },
   })
 );
 
-// --------------------
-// CORS (FIXED)
-// --------------------
 app.use(
   cors({
     origin: "*",
@@ -43,18 +34,11 @@ app.use(
   })
 );
 
-// 🔥 ВАЖНО: явная обработка preflight
 app.options("/{*path}", cors());
 
-// --------------------
-// BODY PARSERS
-// --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --------------------
-// ROUTES
-// --------------------
 app.use("/api", router);
 
 export default app;

@@ -10,6 +10,7 @@ import {
   useListCollections,
   getListStoriesQueryKey,
   getGetFeaturedStoriesQueryKey,
+  getGetStoryQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore, useLangStore } from "@/lib/store";
@@ -18,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CATEGORIES = ["friendship", "love", "family", "city", "childhood", "journeys", "reflections"];
 
 const schema = z.object({
   titleRu: z.string().min(1),
@@ -33,7 +36,22 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const CATEGORIES = ["friendship", "love", "family", "city", "childhood", "journeys"];
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[а-яё]/g, (ch) => {
+      const map: Record<string, string> = {
+        а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"yo",ж:"zh",з:"z",и:"i",
+        й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",
+        у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"shch",ъ:"",ы:"y",
+        ь:"",э:"e",ю:"yu",я:"ya",
+      };
+      return map[ch] ?? ch;
+    })
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
 
 export default function NewPost() {
   const { lang } = useLangStore();
@@ -45,7 +63,10 @@ export default function NewPost() {
   const queryClient = useQueryClient();
 
   const { data: story } = useGetStory(editId ?? 0, {
-    query: { enabled: !!editId },
+    query: {
+      enabled: !!editId,
+      queryKey: getGetStoryQueryKey(editId ?? 0),
+    },
   });
   const { data: collections } = useListCollections();
 
@@ -53,7 +74,7 @@ export default function NewPost() {
     resolver: zodResolver(schema),
     defaultValues: {
       titleRu: "", titleEn: "", excerptRu: "", excerptEn: "",
-      contentRu: "", contentEn: "", category: "friendship",
+      contentRu: "", contentEn: "", category: "reflections",
       readingTimeMinutes: 5, isFeatured: false,
     },
   });
@@ -94,6 +115,7 @@ export default function NewPost() {
   const onSubmit = (values: FormValues) => {
     const payload = {
       ...values,
+      slug: slugify(values.titleRu) || slugify(values.titleEn) || `story-${Date.now()}`,
       collectionId: values.collectionId ? Number(values.collectionId) : undefined,
       isFeatured: values.isFeatured ?? false,
     };
@@ -109,7 +131,9 @@ export default function NewPost() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-serif font-semibold mb-8">
-        {editId ? (lang === "ru" ? "Редактировать" : "Edit Story") : (lang === "ru" ? "Новая история" : "New Story")}
+        {editId
+          ? (lang === "ru" ? "Редактировать" : "Edit Story")
+          : (lang === "ru" ? "Новая история" : "New Story")}
       </h1>
 
       <Form {...form}>
@@ -152,14 +176,14 @@ export default function NewPost() {
             <FormField control={form.control} name="contentRu" render={({ field }) => (
               <FormItem>
                 <FormLabel>Текст (RU)</FormLabel>
-                <FormControl><Textarea {...field} rows={8} /></FormControl>
+                <FormControl><Textarea {...field} rows={10} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="contentEn" render={({ field }) => (
               <FormItem>
                 <FormLabel>Content (EN)</FormLabel>
-                <FormControl><Textarea {...field} rows={8} /></FormControl>
+                <FormControl><Textarea {...field} rows={10} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -168,7 +192,7 @@ export default function NewPost() {
           <div className="grid grid-cols-3 gap-4">
             <FormField control={form.control} name="category" render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>{lang === "ru" ? "Категория" : "Category"}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -182,15 +206,17 @@ export default function NewPost() {
             )} />
             <FormField control={form.control} name="collectionId" render={({ field }) => (
               <FormItem>
-                <FormLabel>Collection</FormLabel>
+                <FormLabel>{lang === "ru" ? "Сборник" : "Collection"}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
-                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={lang === "ru" ? "Нет" : "None"} /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="">{lang === "ru" ? "Нет" : "None"}</SelectItem>
                     {(collections ?? []).map(c => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.nameEn}</SelectItem>
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {lang === "ru" ? c.nameRu : c.nameEn}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -199,7 +225,7 @@ export default function NewPost() {
             )} />
             <FormField control={form.control} name="readingTimeMinutes" render={({ field }) => (
               <FormItem>
-                <FormLabel>Read time (min)</FormLabel>
+                <FormLabel>{lang === "ru" ? "Время (мин)" : "Read time (min)"}</FormLabel>
                 <FormControl><Input type="number" min={1} {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,10 +234,14 @@ export default function NewPost() {
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : (editId ? "Update" : "Publish")}
+              {isPending
+                ? (lang === "ru" ? "Сохранение..." : "Saving...")
+                : (editId
+                    ? (lang === "ru" ? "Обновить" : "Update")
+                    : (lang === "ru" ? "Опубликовать" : "Publish"))}
             </Button>
             <Button type="button" variant="outline" onClick={() => setLocation("/")}>
-              Cancel
+              {lang === "ru" ? "Отмена" : "Cancel"}
             </Button>
           </div>
         </form>
